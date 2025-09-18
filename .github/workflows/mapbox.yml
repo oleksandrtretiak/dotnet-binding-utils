@@ -50,6 +50,12 @@ jobs:
         cmdline-tools-version: 12266719
         packages: tools platform-tools platforms;android-34 platforms;android-35
 
+    - name: Install NDK r28 for 16KB support
+      run: |
+        sdkmanager "ndk;28.2.13676358"
+        echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358" >> $GITHUB_ENV
+        echo "NDK_VERSION=28.0.12433566" >> $GITHUB_ENV
+
     - name: Setup .NET Core SDK 9.0
       uses: actions/setup-dotnet@v3
       with:
@@ -61,10 +67,44 @@ jobs:
         distribution: 'microsoft'
         java-version: '17'
 
-    - name: Build
+    # 🔧 MODIFY: Build with 16KB support
+    - name: Build with 16KB Support
       run: |
         echo "PWD: $PWD"
+        echo "Building with 16KB page size support"
+        echo "NDK Version: $NDK_VERSION"
+        
+        # Set 16KB build flags
+        export APP_SUPPORT_FLEXIBLE_PAGE_SIZES=true
+        export ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON
+        
         sh bind.sh --artifact ${{ inputs.LIB_ARTIFACT }}
+
+    # 🔧 ADD: Post-process packages for 16KB naming
+    - name: Post-process for 16KB naming
+      run: |
+        cd nugets
+        for file in *.nupkg; do
+          if [[ $file == *.nupkg ]]; then
+            # Add 16KB suffix to package version
+            newname="${file%.nupkg}-16kb.nupkg"
+            mv "$file" "$newname"
+            echo "Renamed: $file -> $newname"
+          fi
+        done
+        ls -la *.nupkg
+
+    # 🔧 MODIFY: Upload to your own NuGet source instead of public
+    - name: Upload artifacts to GitHub
+      uses: actions/upload-artifact@v3
+      with:
+        name: mapbox-16kb-packages
+        path: nugets/*.nupkg
+
+    #- name: Build
+    #  run: |
+    #    echo "PWD: $PWD"
+    #    sh bind.sh --artifact ${{ inputs.LIB_ARTIFACT }}
   
     # - name: Publish with Dotnet CLI
     #   env:
@@ -73,27 +113,27 @@ jobs:
     #   run: |
     #     dotnet nuget push ./nugets/*.nupkg --api-key "$NUGET_PUSH_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
 
-    - name: Publish NuGet and symbols
-      id: nuget-push
-      uses: edumserrano/nuget-push@v1.2.0
-      with:
-        api-key: '${{ secrets.NUGET_PUSH_API_KEY }}' # this example is using GitHub secrets to pass the API key
-        working-directory: 'nugets'
+    #- name: Publish NuGet and symbols
+    #  id: nuget-push
+    #  uses: edumserrano/nuget-push@v1.2.0
+    #  with:
+    #    api-key: '${{ secrets.NUGET_PUSH_API_KEY }}' # this example is using GitHub secrets to pass the API key
+    #    working-directory: 'nugets'
 
     # The next step is using powershell to parse the action's output but you can use whatever you prefer.
     # Note that in order to read the step outputs the action step must have an id.
-    - name: Log output
-      if: steps.nuget-push.conclusion != 'skipped' && always() # run regardless if the previous step failed or not, just as long as it wasn't skipped
-      shell: pwsh
-      run: |
-        $pushResult = '${{ steps.nuget-push.outputs.push-result }}' | ConvertFrom-Json
-        $pushResultAsJsonIndented = ConvertTo-Json $pushResult
-        Write-Output $pushResultAsJsonIndented  # outputs the result of the nuget push operation as an indented JSON string
-        Write-Output '${{ steps.nuget-push.outputs.status }}' # outputs the overall status of the nuget push action
+    #- name: Log output
+    #  if: steps.nuget-push.conclusion != 'skipped' && always() # run regardless if the previous step failed or not, just as long as it wasn't skipped
+    #  shell: pwsh
+    #  run: |
+    #    $pushResult = '${{ steps.nuget-push.outputs.push-result }}' | ConvertFrom-Json
+    #    $pushResultAsJsonIndented = ConvertTo-Json $pushResult
+    #    Write-Output $pushResultAsJsonIndented  # outputs the result of the nuget push operation as an indented JSON string
+    #    Write-Output '${{ steps.nuget-push.outputs.status }}' # outputs the overall status of the nuget push action
 
         # iterates over all list of packages and outputs the data from the nuget push operation for each
-        foreach($package in $pushResult.packages) {
-            Write-Output "$($package.status)"  # outputs the status of the nuget push operation
-            Write-Output "$($package.package)" # outputs the NuGet package name that was pushed
-            Write-Output "$($package.symbols)" # outputs the symbols package name that was pushed
-        }
+    #    foreach($package in $pushResult.packages) {
+    #        Write-Output "$($package.status)"  # outputs the status of the nuget push operation
+    #        Write-Output "$($package.package)" # outputs the NuGet package name that was pushed
+    #        Write-Output "$($package.symbols)" # outputs the symbols package name that was pushed
+    #    }
