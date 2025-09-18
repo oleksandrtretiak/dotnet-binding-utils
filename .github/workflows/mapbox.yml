@@ -96,7 +96,7 @@ jobs:
 
     # 🔧 MODIFY: Upload to your own NuGet source instead of public
     - name: Upload artifacts to GitHub
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.0.0
       with:
         name: mapbox-16kb-packages
         path: nugets/*.nupkg
