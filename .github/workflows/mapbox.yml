@@ -25,7 +25,7 @@ on:
         - com.mapbox.plugin:maps-scalebar:11.8.0
         - com.mapbox.plugin:maps-viewport:11.8.0
         - com.mapbox.plugin:maps-annotation:11.8.0
-        - com.mapbox.maps:android-ndk27:11.8.0
+        - com.mapbox.maps:android:11.8.0
 
 jobs:
   build-then-publish:
@@ -48,6 +48,14 @@ jobs:
       with:
         cmdline-tools-version: 12266719
         packages: tools platform-tools platforms;android-34 platforms;android-35
+        
+    - name: Install NDK r28 for 16KB support
+      run: |
+        echo "Installing NDK r28 for 16KB page size support..."
+        sdkmanager "ndk;28.0.12433566"
+        echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.0.12433566" >> $GITHUB_ENV
+        echo "NDK_VERSION=28.0.12433566" >> $GITHUB_ENV
+        ls -la $ANDROID_HOME/ndk/
 
     - name: Setup .NET Core SDK 9.0
       uses: actions/setup-dotnet@v3
@@ -60,9 +68,19 @@ jobs:
         distribution: 'microsoft'
         java-version: '17'
 
-    - name: Build
+    # 🔧 MODIFY: Build with 16KB support environment
+    - name: Build with 16KB Support
       run: |
         echo "PWD: $PWD"
+        echo "Building with 16KB page size support"
+        echo "NDK Version: $NDK_VERSION"
+        echo "NDK Path: $ANDROID_NDK_HOME"
+        
+        # Set 16KB build flags
+        export APP_SUPPORT_FLEXIBLE_PAGE_SIZES=true
+        export ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON
+        
+        # Build with NDK r28
         sh bind.sh --artifact ${{ inputs.LIB_ARTIFACT }}
   
     # - name: Publish with Dotnet CLI
@@ -80,6 +98,18 @@ jobs:
         path: nugets/*.nupkg
         if-no-files-found: error
         retention-days: 365
+
+    # 🔧 FIX: Remove broken log output step or fix it
+    - name: Build Summary
+      if: always()
+      run: |
+        echo "Build completed for: ${{ inputs.LIB_ARTIFACT }}"
+        if [[ -d "./nugets" ]]; then
+          echo "Generated packages:"
+          ls -la ./nugets/*.nupkg || echo "No .nupkg files found"
+        else
+          echo "No nugets directory found"
+        fi
 
     # The next step is using powershell to parse the action's output but you can use whatever you prefer.
     # Note that in order to read the step outputs the action step must have an id.
