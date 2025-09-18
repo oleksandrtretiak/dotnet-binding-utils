@@ -26,7 +26,7 @@ on:
         - com.mapbox.plugin:maps-scalebar:11.10.2
         - com.mapbox.plugin:maps-viewport:11.10.2
         - com.mapbox.plugin:maps-annotation:11.10.2
-        - com.mapbox.maps:android:11.10.2
+        - com.mapbox.maps:android-ndk27:11.10.2
 
 jobs:
   build-then-publish:
@@ -73,12 +73,14 @@ jobs:
     #   run: |
     #     dotnet nuget push ./nugets/*.nupkg --api-key "$NUGET_PUSH_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
 
-    - name: Publish NuGet and symbols
-      id: nuget-push
-      uses: edumserrano/nuget-push@v1.2.0
+    - name: Upload package(s) as artifact
+      uses: actions/upload-artifact@v4
+
       with:
-        api-key: '${{ secrets.NUGET_PUSH_API_KEY }}' # this example is using GitHub secrets to pass the API key
-        working-directory: 'nugets'
+        name: nuget-packages
+        path: nugets/*.nupkg
+        if-no-files-found: error
+        retention-days: 365
 
     # The next step is using powershell to parse the action's output but you can use whatever you prefer.
     # Note that in order to read the step outputs the action step must have an id.
