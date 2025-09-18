@@ -1,0 +1,37 @@
+name: Build All MapBox 16KB Packages
+on:
+  workflow_dispatch:
+  
+jobs:
+  build-all:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        artifact:
+          - com.mapbox.annotation:annotation:0.3.0 
+          - com.mapbox.common:common:24.10.0
+          - com.mapbox.maps:android-ndk27:11.10.2
+          - com.mapbox.maps:base:11.10.2
+          - com.mapbox.module:maps-telemetry:11.10.2
+          - com.mapbox.extension:maps-style:11.10.2
+          - com.mapbox.extension:maps-localization:11.10.2
+          - com.mapbox.plugin:maps-animation:11.10.2
+          - com.mapbox.plugin:maps-attribution:11.10.2
+          - com.mapbox.plugin:maps-compass:11.10.2
+          - com.mapbox.plugin:maps-gestures:11.10.2
+          - com.mapbox.plugin:maps-lifecycle:11.10.2
+          - com.mapbox.plugin:maps-locationcomponent:11.10.2
+          - com.mapbox.plugin:maps-logo:11.10.2
+          - com.mapbox.plugin:maps-overlay:11.10.2
+          - com.mapbox.plugin:maps-scalebar:11.10.2
+          - com.mapbox.plugin:maps-viewport:11.10.2
+          - com.mapbox.plugin:maps-annotation:11.10.2
+          - com.mapbox.maps:android:11.10.2
+          # Add all your artifacts here
+    
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build ${{ matrix.artifact }}
+      uses: ./.github/workflows/android-binding.yml
+      with:
+        LIB_ARTIFACT: ${{ matrix.artifact }}
