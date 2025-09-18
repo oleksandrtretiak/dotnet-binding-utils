@@ -8,6 +8,16 @@
     <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
   <PropertyGroup>
+    <!-- Add 16KB support properties -->
+    <AndroidUseAapt2>true</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+    <AndroidNdkVersion>28.0.12433566</AndroidNdkVersion>
+    
+    <!-- Custom versioning for 16KB packages -->
+    <Version>$(PackageVersion)-16kb</Version>
+    <PackageId>$(PackageId).Compatible16KB</PackageId>
+  </PropertyGroup>
+  <PropertyGroup>
     <AndroidTargetSdkVersion>34</AndroidTargetSdkVersion>
     <AndroidSdkDirectory Condition=" '$(OS)' == 'Unix' ">$(Home)/Library/Android/sdk</AndroidSdkDirectory>
     <AndroidSdkDirectory Condition=" '$(OS)' != 'Unix' ">$(UserProfile)/AppData/Local/Android/sdk</AndroidSdkDirectory>
