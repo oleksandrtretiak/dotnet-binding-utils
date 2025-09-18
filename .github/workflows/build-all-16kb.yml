@@ -32,6 +32,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build ${{ matrix.artifact }}
-      uses: ./.github/workflows/android-binding.yml
+      uses: ./.github/workflows/mapbox.yml
       with:
         LIB_ARTIFACT: ${{ matrix.artifact }}
